@@ -1,4 +1,4 @@
-package pers.ericmonlye.hellospring.service;
+package pers.ericmonlye.springemail.service;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
