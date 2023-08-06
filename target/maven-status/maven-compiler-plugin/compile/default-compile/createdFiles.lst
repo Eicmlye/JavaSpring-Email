@@ -1,4 +1,4 @@
-pers\ericmonlye\hellospring\service\MailService.class
-pers\ericmonlye\hellospring\service\User.class
-pers\ericmonlye\hellospring\Main.class
-pers\ericmonlye\hellospring\service\UserService.class
+pers\ericmonlye\springemail\Main.class
+pers\ericmonlye\springemail\service\User.class
+pers\ericmonlye\springemail\service\UserService.class
+pers\ericmonlye\springemail\service\MailService.class

@@ -1,4 +1,4 @@
-package pers.ericmonlye.hellospring;
+package pers.ericmonlye.springemail;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
