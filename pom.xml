@@ -1,9 +1,13 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project  xmlns="http://maven.apache.org/POM/4.0.0" 
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 
+          https://maven.apache.org/xsd/maven-4.0.0.xsd"
+          >
   <modelVersion>4.0.0</modelVersion>
   <groupId>pers.ericmonlye</groupId>
-  <artifactId>Json-Parser-Java</artifactId>
+  <artifactId>javaspring-email</artifactId>
   <version>0.0.1-SNAPSHOT</version>
-  <name>springtest</name>
+  <name>springemail</name>
   
   <properties>
 	  <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -14,6 +18,7 @@
   </properties>
   
   <dependencies>
+    <!-- JUnit --> 
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-engine</artifactId>
@@ -21,6 +26,7 @@
       <scope>test</scope>
     </dependency>
     
+    <!-- slf4j and logback -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -37,6 +43,7 @@
       <version>1.4.9</version>
     </dependency>
     
+    <!-- Spring Framework -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
@@ -56,6 +63,13 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-expression</artifactId>
       <version>6.0.11</version>
+    </dependency>
+    
+    <!-- JDBC -->
+    <dependency>
+      <groupId>mysql</groupId>
+      <artifactId>mysql-connector-java</artifactId>
+      <version>8.0.33</version>
     </dependency>
   </dependencies>
 </project>
