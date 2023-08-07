@@ -10,7 +10,16 @@ public class User {
 	private String email;
 	private String password;
 	private String name;
+	
+	/* constructors */
+	public User(long id, String email, String password, String name) {
+		this.id = id;
+		this.email = email;
+		this.password = password;
+		this.name = name;
+	}
 
+	/* JavaBean API */
 	public long getId() {
 		return this.id;
 	}

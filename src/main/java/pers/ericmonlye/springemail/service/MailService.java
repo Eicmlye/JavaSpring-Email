@@ -12,6 +12,12 @@ public class MailService {
 	
 	private ZoneId zoneId = ZoneId.systemDefault();
 	
+	/* constructor */
+	public MailService() { /* Default constructor for IoC */
+		/* DO NOTHING */
+	}
+	
+	/* JavaBean API */
 	public void setZoneId(ZoneId zoneId) {
 		this.zoneId = zoneId;
 		
@@ -19,5 +25,13 @@ public class MailService {
 	}
 	public String getTime() {
 		return ZonedDateTime.now(this.zoneId).format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
+	}
+	
+	/* mail services */
+	public void sendLoginMail(User user) {
+		log.info("{} successfully logged in at {}", user.getName(), getTime());
+	}
+	public void sendRegisterMail(User user) {
+		log.info("Welcome, {}! You just registered for our site. ", user.getName());
 	}
 }
