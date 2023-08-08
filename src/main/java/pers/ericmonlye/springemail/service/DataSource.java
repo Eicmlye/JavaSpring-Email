@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 import org.slf4j.Logger;
@@ -14,34 +16,256 @@ public class DataSource {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 	
 	/* JDBC info for MySQL */
-	private String url = "jdbc:mysql://localhost:3306/jdbctest";
-	private String user = "root";
-	private String password = "";
+	private String hostname;
+	private String port;
+	private String dbname;
+	private String dburl;
+	private String dbuser;
+	private String dbpassword;
+	private String tablename;
 	
-	public void setPassword() {
-		try (Scanner scanner = new Scanner(System.in)) {
-			if (scanner.hasNextLine()) {
-				System.out.printf("Enter password for %s:", user);
-				this.password = scanner.nextLine();
-			}
-		}
+	private long maxId;
+	private boolean maxIdUpdated;
+	
+	/* constructors */
+	public DataSource() { 
+		this.hostname = "localhost";
+		this.port = "3306";
+		this.dbname = "springemail";
+		
+		/* URL format "jdbc:mysql://<hostname>:<port>/<dbname>" */
+		this.dburl = "jdbc:mysql://" + hostname + ":" + port + "/" + dbname; 
+		this.dbuser = "Eric";
+		this.dbpassword = "";
+		setDbpassword();
+		
+		this.tablename = "Users";
+		
+		this.maxId = 0;
+		this.maxIdUpdated = false;
 	}
 	
-	public void connect() {
+	/* JavaBean API */
+	public void setDbpassword() {
+		try (Scanner scanner = new Scanner(System.in)) {
+			System.out.printf("Enter password for %s: ", dbuser);
+			if (scanner.hasNextLine()) {
+				this.dbpassword = scanner.nextLine();
+			}
+		}
+		
+		return;
+	}
+	
+	/* service API */
+	private String str2Attr(String attr) {
+		switch(attr) {
+		case "email":
+		case "name":
+			return attr;
+		case "id":
+		case "password":
+			log.warn("Attribute \"{}\" is not accessible. ", attr);
+			throw new RuntimeException("Attribute \"" + attr + "\" is not accessible. ");
+		default:
+			log.warn("Unknown attribute \"{}\". ", attr);
+			throw new RuntimeException("Unknown attribute " + attr + ". ");
+		}
+	}
+	private String selectBy(String attr) {
+		return "SELECT * FROM " + tablename + " WHERE " + str2Attr(attr) + " = ?";
+	}
+	private User selectUser(String attr, String attrVal) {
+		User ret = null;
+
 		// Request for connection;
-		try (Connection conn = DriverManager.getConnection(url, user, password)) {
-			try (PreparedStatement ps = conn.prepareStatement("")) {
-//				ps.setObject(1, ""); // index begins from 1;
+		try (Connection conn = DriverManager.getConnection(dburl, dbuser, dbpassword)) {
+			try (PreparedStatement ps = conn.prepareStatement(selectBy(attr))) 
+			{
+				ps.setObject(1, attrVal); // index begins from 1;
 				try (ResultSet result = ps.executeQuery()){
 					while (result.next()) {
-						
+						ret = new User(	result.getLong("id"), 
+										result.getString("email"),
+										result.getString("password"),
+										result.getString("name")
+										);
 					}
 				}
+			}
+			catch (SQLException e) {
+				log.warn("Preparation failure. ");
+				throw new RuntimeException(e.getMessage());
 			}
 		}
 		catch (SQLException e) {
 			log.warn("Connection failure. ");
-			throw new RuntimeException("Connection failure. ");
+			throw new RuntimeException(e.getMessage());
 		}
+		
+		return ret;
+	}
+	private List<String> selectAttr(String attr) {
+		List<String> ret = new ArrayList<String>();
+		
+		// Request for connection;
+		if (dbpassword.equals("")) {
+			setDbpassword();
+		}
+		try (Connection conn = DriverManager.getConnection(dburl, dbuser, dbpassword)) {
+			try (PreparedStatement ps = conn.prepareStatement(
+					"SELECT " + str2Attr(attr) + " FROM " + tablename
+					)) 
+			{
+				try (ResultSet result = ps.executeQuery()){
+					while (result.next()) {
+						ret.add(result.getString(attr));
+					}
+				}
+			}
+			catch (SQLException e) {
+				log.warn("Preparation failure. ");
+				throw new RuntimeException(e.getMessage());
+			}
+		}
+		catch (SQLException e) {
+			log.warn("Connection failure. ");
+			throw new RuntimeException(e.getMessage());
+		}
+		
+		return ret;
+	}
+	public List<Long> selectId() {
+		List<Long> ret = new ArrayList<Long>();
+		
+		// Request for connection;
+		try (Connection conn = DriverManager.getConnection(dburl, dbuser, dbpassword)) {
+			try (PreparedStatement ps = conn.prepareStatement(
+					"SELECT id FROM " + tablename
+					)) 
+			{
+				try (ResultSet result = ps.executeQuery()){
+					while (result.next()) {
+						ret.add(result.getLong("id"));
+					}
+				}
+			}
+			catch (SQLException e) {
+				log.warn("Preparation failure. ");
+				throw new RuntimeException(e.getMessage());
+			}
+		}
+		catch (SQLException e) {
+			log.warn("Connection failure. ");
+			throw new RuntimeException(e.getMessage());
+		}
+		
+		return ret;
+	}
+	public User selectByEmail(String email) {
+		return selectUser("email", email);
+	}
+	public User selectByName(String name) {
+		return selectUser("name", name);
+	}
+	public User selectById(long id) {
+		User ret = null;
+
+		// Request for connection;
+		try (Connection conn = DriverManager.getConnection(dburl, dbuser, dbpassword)) {
+			try (PreparedStatement ps = conn.prepareStatement(
+					"SELECT * FROM " + tablename + " WHERE id = ?"
+					)) 
+			{
+				ps.setObject(1, id); // index begins from 1;
+				try (ResultSet result = ps.executeQuery()){
+					while (result.next()) {
+						ret = new User(	result.getLong("id"), 
+										result.getString("email"),
+										result.getString("password"),
+										result.getString("name")
+										);
+					}
+				}
+			}
+			catch (SQLException e) {
+				log.warn("Preparation failure. ");
+				throw new RuntimeException(e.getMessage());
+			}
+		}
+		catch (SQLException e) {
+			log.warn("Connection failure. ");
+			throw new RuntimeException(e.getMessage());
+		}
+		
+		return ret;
+	}
+	public long selectMaxId() {
+		if (!maxIdUpdated) {
+			// Request for connection;
+			try (Connection conn = DriverManager.getConnection(dburl, dbuser, dbpassword)) {
+				try (PreparedStatement ps = conn.prepareStatement(
+						"SELECT MAX(id) AS id FROM " + tablename
+						)) 
+				{
+					try (ResultSet result = ps.executeQuery()){
+						while (result.next()) {
+							maxId = result.getLong("id");
+						}
+					}
+				}
+				catch (SQLException e) {
+					log.warn("Preparation failure. ");
+					throw new RuntimeException(e.getMessage());
+				}
+			}
+			catch (SQLException e) {
+				log.warn("Connection failure. ");
+				throw new RuntimeException(e.getMessage());
+			}
+			
+			maxIdUpdated = true;
+		}
+		
+		return maxId;
+	}
+	public List<String> selectEmail() {
+		return selectAttr("email");
+	}
+	public List<String> selectName() {
+		return selectAttr("name");
+	}
+	public void insertUser(User user, String password) {
+		// Request for connection;
+		try (Connection conn = DriverManager.getConnection(dburl, dbuser, dbpassword)) {
+			try (PreparedStatement ps = conn.prepareStatement(
+					"INSERT INTO " + tablename + " VALUES (?,?,?,?)"
+					)) 
+			{
+				ps.setObject(1, user.getId()); // index begins from 1;
+				ps.setObject(2, user.getEmail());
+				ps.setObject(3, password);
+				ps.setObject(4, user.getName());
+				try {
+					ps.executeUpdate();
+				}
+				catch (SQLException e) {
+					log.warn("Execution failure. ");
+					throw new RuntimeException(e.getMessage());
+				}
+			}
+			catch (SQLException e) {
+				log.warn("Preparation failure. ");
+				throw new RuntimeException(e.getMessage());
+			}
+		}
+		catch (SQLException e) {
+			log.warn("Connection failure. ");
+			throw new RuntimeException(e.getMessage());
+		}
+		
+		maxIdUpdated = false;
+		
+		return;
 	}
 }

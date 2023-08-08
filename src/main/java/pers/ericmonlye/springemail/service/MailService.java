@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory;
 public class MailService {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
 	
-	private ZoneId zoneId = ZoneId.systemDefault();
+	private ZoneId zoneId;
 	
 	/* constructor */
-	public MailService() { /* Default constructor for IoC */
-		/* DO NOTHING */
+	public MailService() {
+		this.zoneId = ZoneId.systemDefault();
 	}
 	
 	/* JavaBean API */
@@ -27,11 +27,14 @@ public class MailService {
 		return ZonedDateTime.now(this.zoneId).format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
 	}
 	
-	/* mail services */
+	/* service API */
+	public void sendRegisterMail(User user) {
+		log.info("Welcome, {}! You just registered for our site. ", user.getName());
+	}
 	public void sendLoginMail(User user) {
 		log.info("{} successfully logged in at {}", user.getName(), getTime());
 	}
-	public void sendRegisterMail(User user) {
-		log.info("Welcome, {}! You just registered for our site. ", user.getName());
+	public void sendLogoutMail(User user) {
+		log.info("{} successfully logged out at {}", user.getName(), getTime());
 	}
 }

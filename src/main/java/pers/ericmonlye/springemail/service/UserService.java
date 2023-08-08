@@ -13,13 +13,7 @@ public class UserService {
 
 	private MailService mailService;
 	private DataSource dataSource;
-	
-	/* registered user list cache */
-	private List<User> users = new ArrayList<>(List.of(
-			new User(1, "bob@example.com", "password", "Bob"),
-			new User(2, "alice@example.com", "password", "Alice"),
-			new User(3, "tom@example.com", "password", "Tom")
-			));
+	private List<User> loginUsers = new ArrayList<User>();
 	
 	/* constructors */
 	/*
@@ -45,36 +39,85 @@ public class UserService {
 		
 		return;
 	}
-	public User getUser(long id) {
-		return this.users.stream().filter(user -> user.getId() == id).findFirst().orElseThrow();
+	public boolean isLogin(String email) {
+		return loginUsers.stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
+	}
+	public boolean isLogin(long id) {
+		return loginUsers.stream().anyMatch(u -> u.getId() == id);
 	}
 	
-	/* user operations */
+	/* service API */
+	public User getUser(String email) {
+		if (isLogin(email)) {
+			return loginUsers.stream().filter(u -> u.getEmail().equalsIgnoreCase(email)).toList().get(0);
+		}
+
+		if (dataSource.selectEmail().stream().anyMatch(e -> e.equalsIgnoreCase(email))) {
+			return dataSource.selectByEmail(email);
+		}
+
+		log.warn("No existing account found. ");
+		throw new RuntimeException("No existing account found. ");
+	}
+	public User getUser(long id) {
+		if (isLogin(id)) {
+			return loginUsers.stream().filter(u -> u.getId() == id).toList().get(0);
+		}
+
+		if (dataSource.selectId().stream().anyMatch(i -> i.equals(id))) {
+			return dataSource.selectById(id);
+		}
+
+		log.warn("No existing account found. ");
+		throw new RuntimeException("No existing account found. ");
+	}
 	public User register(String email, String password, String name) {
-		users.forEach(user -> {
-			if (user.getEmail().equalsIgnoreCase(email)) {
-				log.warn("Email {} already exists. ", email);
-				throw new RuntimeException("Email already exists. ");
+		dataSource.selectEmail().forEach(e -> {
+			if (e.equalsIgnoreCase(email)) {
+				log.warn("This email has already registered for an account. ");
+				throw new RuntimeException("This email has already registered for an account. ");
 			}
 		});
 		
-		User user = new User(	users.stream().mapToLong(u -> u.getId()).max().getAsLong() + 1,
+		User user = new User(	dataSource.selectMaxId() + 1,
 								email, password, name);
-		users.add(user);
+		dataSource.insertUser(user, password);
 		mailService.sendRegisterMail(user);
 		
 		return user;
 	}
 	public User login(String email, String password) {
-		for (User user : users) {
-			if (user.getEmail().equalsIgnoreCase(email) && user.checkPassword(password)) {
-				mailService.sendLoginMail(user);
-				
-				return user;
-			}
+		if (isLogin(email)) {
+			log.warn("This account has already logged in. ");
+			throw new RuntimeException("This account has already logged in. ");
 		}
 		
-		log.warn("Wrong email address or password. ");
-		throw new RuntimeException("Wrong email address or password. ");
+		if (!dataSource.selectEmail().stream().anyMatch(e -> e.equalsIgnoreCase(email))) {
+			log.warn("This email is not registered yet. ");
+			throw new RuntimeException("This email is not registered yet. ");
+		}
+		
+		if (!dataSource.selectByEmail(email).checkPassword(password)) {
+			log.warn("Password incorrect. ");
+			throw new RuntimeException("Password incorrect. ");
+		}
+		
+		User user = dataSource.selectByEmail(email);
+		loginUsers.add(user);
+		mailService.sendLoginMail(user);
+		
+		return user;
+	}
+	public void logout(String email) {
+		if (!isLogin(email)) {
+			log.warn("This account has not logged in yet. ");
+			throw new RuntimeException("This account has not logged in yet. ");
+		}
+		
+		User user = loginUsers.stream().filter(u -> u.getEmail().equalsIgnoreCase(email)).toList().get(0);
+		loginUsers.remove(user);
+		mailService.sendLogoutMail(user);
+		
+		return;
 	}
 }
