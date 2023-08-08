@@ -14,7 +14,11 @@ public class Main {
 		try (ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("Beans.xml")) {
 			UserService userService = context.getBean(UserService.class);
 			
-			log.info(userService.getUser(1).getName());
+			userService.login("bob@example.com", "password");
+			log.info(userService.isLogin("bob@example.com") ? "Logged in. " : "Not logged in. ");
+			userService.logout("bob@example.com");
+			
+			userService.register("eric@example.com", "password", "Eric");
 		}
 		
 		return;
