@@ -1,12 +1,14 @@
 package pers.ericmonlye.springemail.service;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-//import org.springframework.context.ApplicationContext;
-//import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 public class UserService {
 	protected final Logger log = LoggerFactory.getLogger(getClass());
@@ -39,11 +41,11 @@ public class UserService {
 		
 		return;
 	}
-	public boolean isLogin(String email) {
-		return loginUsers.stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
-	}
 	public boolean isLogin(long id) {
 		return loginUsers.stream().anyMatch(u -> u.getId() == id);
+	}
+	public boolean isLogin(String email) {
+		return loginUsers.stream().anyMatch(u -> u.getEmail().equalsIgnoreCase(email));
 	}
 	
 	/* service API */
@@ -119,5 +121,104 @@ public class UserService {
 		mailService.sendLogoutMail(user);
 		
 		return;
+	}
+	public void delete(String email) {
+		if (!isLogin(email)) {
+			log.warn("Please log in before you delete the account. ");
+			throw new RuntimeException("Please log in before you delete the account. ");
+		}
+		
+		/* 
+		 * Now that the account has logged in, this must be an existing 
+		 * account, and the current user knows the correct password.
+		 */
+		User user = dataSource.selectByEmail(email);
+		loginUsers.remove(user);
+		dataSource.deleteUser(user);
+		mailService.sendDeleteMail(user);
+		
+		return;
+	}
+	public User editPassword(User user) {
+		String password = "";
+		
+		/* check password again */
+		System.out.printf("Enter password for %s: ", user.getEmail());
+		password = readToken();
+		
+		if (!user.checkPassword(password)) {
+			throw new RuntimeException("Current password incorrect. ");
+		}
+
+		System.out.printf("Enter new password for %s: ", user.getEmail());
+		password = readToken();
+		
+		loginUsers.get(loginUsers.indexOf(user)).setPassword(password);
+		mailService.sendEditPasswordMail(user);
+		logout(user.getEmail());
+		dataSource.updateUser(user, password);
+		
+		return user;
+	}
+	public void editPassword(User user, String prevPassword, String newPassword) {
+		/* check password again */
+		if (!user.checkPassword(prevPassword)) {
+			throw new RuntimeException("Current password incorrect. ");
+		}
+
+		System.out.printf("Enter new password for %s: ", user.getEmail());
+		
+		loginUsers.get(loginUsers.indexOf(user)).setPassword(newPassword);
+		mailService.sendEditPasswordMail(user);
+		logout(user.getEmail());
+		dataSource.updateUser(user, newPassword);
+		
+		return;
+	}
+
+	private boolean isWhitespace(char ch) {
+		/*
+		 * Lines may end with "\r\n", where '\r' is '\u000D'.
+		 */
+		return (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r');
+	}
+	private String readToken() {
+		String ret = "";
+		char cache = '\0';
+		
+		try (BufferedReader buf = new BufferedReader(new NoCloseInputStreamReader(System.in))) {
+			try {
+				while (!isWhitespace(cache = (char)buf.read())) {
+					ret += cache;
+				}
+				if (cache != '\n') {
+					buf.readLine(); // skip remaining characters;
+				}
+			}
+			catch (IOException e) {
+//				log.warn("Read failed. ");
+				log.warn(e.getMessage());
+				throw new RuntimeException(e.getMessage());
+			}
+		}
+		catch (IOException e) {
+			log.warn("Reader initalization failed. ");
+			throw new RuntimeException(e.getMessage());
+		}
+		
+		return ret;
+	}
+	/** 
+	 * 关于标准输入流{@code System.in}被自动关闭后无法打开的解决方法
+	 * https://blog.csdn.net/weixin_44843824/article/details/111778856
+	 */
+	private class NoCloseInputStreamReader extends InputStreamReader{
+		public NoCloseInputStreamReader(InputStream in) {
+			super(in);
+		}
+		
+		public void close() throws IOException {
+			// DO NOTHING;
+		}
 	}
 }

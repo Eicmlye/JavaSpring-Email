@@ -29,7 +29,12 @@ public class User {
 	public String getName() {
 		return this.name;
 	}
-
+	public void setPassword(String password){
+		this.password = password;
+		
+		return;
+	}
+	
 	public boolean checkPassword(String inword) {
 		return this.password.equals(inword);
 	}

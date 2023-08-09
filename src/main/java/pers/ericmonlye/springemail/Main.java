@@ -19,6 +19,8 @@ public class Main {
 			userService.logout("bob@example.com");
 			
 			userService.register("eric@example.com", "password", "Eric");
+			userService.login("eric@example.com", "password");
+			userService.delete("eric@example.com");
 		}
 		
 		return;

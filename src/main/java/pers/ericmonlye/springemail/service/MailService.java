@@ -24,17 +24,23 @@ public class MailService {
 		return;
 	}
 	public String getTime() {
-		return ZonedDateTime.now(this.zoneId).format(DateTimeFormatter.ISO_ZONED_DATE_TIME);
+		return ZonedDateTime.now(this.zoneId).format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS"));
 	}
 	
 	/* service API */
 	public void sendRegisterMail(User user) {
-		log.info("Welcome, {}! You just registered for our site. ", user.getName());
+		log.info("Welcome, {}! Your account is successfully registered. ", user.getName());
 	}
 	public void sendLoginMail(User user) {
 		log.info("{} successfully logged in at {}", user.getName(), getTime());
 	}
 	public void sendLogoutMail(User user) {
 		log.info("{} successfully logged out at {}", user.getName(), getTime());
+	}
+	public void sendDeleteMail(User user) {
+		log.info("Your account {} has been successfully deleted from our database. ", user.getEmail());
+	}
+	public void sendEditPasswordMail(User user) {
+		log.info("The password of your account {} has changed. Please log in again. ", user.getEmail());
 	}
 }
