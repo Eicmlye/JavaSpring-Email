@@ -2,12 +2,6 @@ package pers.ericmonlye.springemail.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +35,14 @@ class UserServiceTest {
 			assertEquals("Eric", userService.register("eric@example.com", "password", "Eric").getName());
 			assertEquals(4, userService.getUser(4).getId());
 			assertEquals("Eric", userService.login("eric@example.com", "password").getName());
-			userService.logout("eric@example.com");
+			userService.delete("eric@example.com");
+			
+			userService.register("jim@example.com", "password", "Jim");
+			userService.editPassword(userService.login("jim@example.com", "password"), "password", "newpassword");
+			assertEquals("Jim", userService.login("jim@example.com", "newpassword").getName());
+			userService.editPassword(userService.getUser("jim@example.com"), "newpassword", "password");
+			userService.login("jim@example.com", "password");
+			userService.delete("jim@example.com");
 		}
 	}
 }
