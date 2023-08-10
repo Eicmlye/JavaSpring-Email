@@ -1,0 +1,6 @@
+pers\ericmonlye\springemail\service\User.class
+pers\ericmonlye\springemail\AppConfig.class
+pers\ericmonlye\springemail\service\UserService.class
+pers\ericmonlye\springemail\service\DataSource.class
+pers\ericmonlye\springemail\service\MailService.class
+pers\ericmonlye\springemail\service\NoCloseInputStreamReader.class
