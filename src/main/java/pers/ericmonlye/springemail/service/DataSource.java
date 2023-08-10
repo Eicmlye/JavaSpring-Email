@@ -1,9 +1,6 @@
 package pers.ericmonlye.springemail.service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -51,55 +48,15 @@ public class DataSource {
 	/* JavaBean API */
 	public void setDbpassword() {
 		System.out.printf("Enter password for %s: ", dbuser);
-		dbpassword = readToken();
-		
-		return;
-	}
-
-	private boolean isWhitespace(char ch) {
-		/*
-		 * Lines may end with "\r\n", where '\r' is '\u000D'.
-		 */
-		return (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r');
-	}
-	private String readToken() {
-		String ret = "";
-		char cache = '\0';
-		
-		try (BufferedReader buf = new BufferedReader(new NoCloseInputStreamReader(System.in))) {
-			try {
-				while (!isWhitespace(cache = (char)buf.read())) {
-					ret += cache;
-				}
-				if (cache != '\n') {
-					buf.readLine(); // skip remaining characters;
-				}
-			}
-			catch (IOException e) {
-//				log.warn("Read failed. ");
-				log.warn(e.getMessage());
-				throw new RuntimeException(e.getMessage());
-			}
+		try (NoCloseInputStreamReader reader = new NoCloseInputStreamReader()) {
+			dbpassword = reader.readToken();
 		}
 		catch (IOException e) {
 			log.warn("Reader initalization failed. ");
 			throw new RuntimeException(e.getMessage());
 		}
 		
-		return ret;
-	}
-	/** 
-	 * 关于标准输入流{@code System.in}被自动关闭后无法打开的解决方法
-	 * https://blog.csdn.net/weixin_44843824/article/details/111778856
-	 */
-	private class NoCloseInputStreamReader extends InputStreamReader{
-		public NoCloseInputStreamReader(InputStream in) {
-			super(in);
-		}
-		
-		public void close() throws IOException {
-			// DO NOTHING;
-		}
+		return;
 	}
 	
 	/* service API */

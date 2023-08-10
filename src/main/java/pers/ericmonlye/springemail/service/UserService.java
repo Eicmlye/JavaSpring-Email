@@ -1,9 +1,6 @@
 package pers.ericmonlye.springemail.service;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -139,26 +136,38 @@ public class UserService {
 		
 		return;
 	}
-	public User editPassword(User user) {
+	public void editPassword(User user) {
 		String password = "";
 		
 		/* check password again */
 		System.out.printf("Enter password for %s: ", user.getEmail());
-		password = readToken();
+		try (NoCloseInputStreamReader reader = new NoCloseInputStreamReader()) {
+			password = reader.readToken();
+		}
+		catch (IOException e) {
+			log.warn("Reader initalization failed. ");
+			throw new RuntimeException(e.getMessage());
+		}
 		
 		if (!user.checkPassword(password)) {
 			throw new RuntimeException("Current password incorrect. ");
 		}
 
 		System.out.printf("Enter new password for %s: ", user.getEmail());
-		password = readToken();
+		try (NoCloseInputStreamReader reader = new NoCloseInputStreamReader()) {
+			password = reader.readToken();
+		}
+		catch (IOException e) {
+			log.warn("Reader initalization failed. ");
+			throw new RuntimeException(e.getMessage());
+		}
 		
 		loginUsers.get(loginUsers.indexOf(user)).setPassword(password);
 		mailService.sendEditPasswordMail(user);
 		logout(user.getEmail());
 		dataSource.updateUser(user, password);
 		
-		return user;
+		return;
 	}
 	public void editPassword(User user, String prevPassword, String newPassword) {
 		/* check password again */
@@ -174,51 +183,5 @@ public class UserService {
 		dataSource.updateUser(user, newPassword);
 		
 		return;
-	}
-
-	private boolean isWhitespace(char ch) {
-		/*
-		 * Lines may end with "\r\n", where '\r' is '\u000D'.
-		 */
-		return (ch == ' ' || ch == '\t' || ch == '\n' || ch == '\r');
-	}
-	private String readToken() {
-		String ret = "";
-		char cache = '\0';
-		
-		try (BufferedReader buf = new BufferedReader(new NoCloseInputStreamReader(System.in))) {
-			try {
-				while (!isWhitespace(cache = (char)buf.read())) {
-					ret += cache;
-				}
-				if (cache != '\n') {
-					buf.readLine(); // skip remaining characters;
-				}
-			}
-			catch (IOException e) {
-//				log.warn("Read failed. ");
-				log.warn(e.getMessage());
-				throw new RuntimeException(e.getMessage());
-			}
-		}
-		catch (IOException e) {
-			log.warn("Reader initalization failed. ");
-			throw new RuntimeException(e.getMessage());
-		}
-		
-		return ret;
-	}
-	/** 
-	 * 关于标准输入流{@code System.in}被自动关闭后无法打开的解决方法
-	 * https://blog.csdn.net/weixin_44843824/article/details/111778856
-	 */
-	private class NoCloseInputStreamReader extends InputStreamReader{
-		public NoCloseInputStreamReader(InputStream in) {
-			super(in);
-		}
-		
-		public void close() throws IOException {
-			// DO NOTHING;
-		}
 	}
 }
